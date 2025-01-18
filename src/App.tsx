@@ -1,4 +1,3 @@
-import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,10 +6,10 @@ import {
   Link,
 } from "react-router-dom";
 import Register from "./pages/Register";
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import Home from "./pages/Home";
-import Playlist from "./pages/Playlist"; // Updated import to match file name
-import './app.css';
+import Playlist from "./pages/PlayList";
+import "./app.css";
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("authToken");
