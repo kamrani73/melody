@@ -31,9 +31,11 @@ const Login = () => {
         }
       );
 
+     
       const token = response.data.result.access_token;
       localStorage.setItem("authToken", token);
 
+     
       navigate("/home");
     } catch (error: any) {
       setErrorMessage(

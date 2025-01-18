@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
-import axios from "axios";
+import { fetchPlaylists, fetchSongsForPlaylist, createPlaylist, deleteSongFromPlaylist, deletePlaylist, updatePlaylistTitle } from '../api';
 
 interface Playlist {
   id: number;
@@ -15,7 +15,7 @@ interface Song {
   title: string;
   artist_name: string;
   album_name: string;
-  duration: string;  
+  duration: string;
   file: string;
   format: string;
 }
@@ -27,61 +27,21 @@ const PlaylistPage = () => {
   const [playlistTitle, setPlaylistTitle] = useState<string>("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
-  const [playlistSuccessMessage, setPlaylistSuccessMessage] = useState<
-    string | null
-  >(null);
+  const [playlistSuccessMessage, setPlaylistSuccessMessage] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<{ [key: number]: boolean }>({});
   const [newPlaylistName, setNewPlaylistName] = useState<string>("");
 
-  const fetchPlaylists = async () => {
-    const token = localStorage.getItem("authToken");
-    try {
-      const response = await axios.get("http://192.168.100.24:9000/playlist", {
-        params: {
-          "per-page": 20,
-          page: 1,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      setPlaylists(response.data.result.items || []);
-      setLoading(false);
-    } catch (err: any) {
-      setPlaylistError(
-        err.response?.data?.message || "Failed to load playlists"
-      );
-      setLoading(false);
-    }
-  };
-
-  const fetchSongsForPlaylist = async (playlistId: number) => {
-    const token = localStorage.getItem("authToken");
-
-    try {
-      const response = await axios.get(
-        `http://192.168.100.24:9000/playlist/${playlistId}/songs`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setSongs((prevSongs) => ({
-        ...prevSongs,
-        [playlistId]: response.data.result.items || [],
-      }));
-    } catch (err: any) {
-      setPlaylistError("Failed to load songs for this playlist.");
-    }
-  };
-
   useEffect(() => {
-    fetchPlaylists();
+    const fetchData = async () => {
+      try {
+        const playlistsData = await fetchPlaylists();
+        setPlaylists(playlistsData);
+      } catch (error) {
+        setPlaylistError('Failed to load playlists');
+      }
+      setLoading(false);
+    };
+    fetchData();
   }, []);
 
   const formatDuration = (duration: string) => {
@@ -103,81 +63,20 @@ const PlaylistPage = () => {
 
   const handleCreatePlaylist = async (e: FormEvent) => {
     e.preventDefault();
-
     if (!playlistTitle || !coverImage) {
       setPlaylistError("Title and cover image are required!");
       return;
     }
-
-    const token = localStorage.getItem("authToken");
-
-    const formData = new FormData();
-    formData.append("title", playlistTitle);
-    formData.append("cover", coverImage);
-
     try {
-      const response = await axios.post(
-        "http://192.168.100.24:9000/playlist",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
+      await createPlaylist(playlistTitle, coverImage);
       setPlaylistSuccessMessage("Playlist created successfully!");
       setPlaylistTitle("");
       setCoverImage(null);
       setPlaylistError(null);
-      fetchPlaylists();
-    } catch (err: any) {
-      setPlaylistError(
-        err.response?.data?.message || "Failed to create playlist"
-      );
-    }
-  };
-
-  const handleDeleteSong = async (playlistId: number, songId: number) => {
-    const token = localStorage.getItem("authToken");
-
-    try {
-      await axios.delete(
-        `http://192.168.100.24:9000/playlist/add-song/${playlistId}`,
-        {
-          data: {
-            song_id: songId,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setPlaylistSuccessMessage("Song deleted successfully!");
-      fetchSongsForPlaylist(playlistId);
-    } catch (err: any) {
-      setPlaylistError("Failed to delete song.");
-    }
-  };
-
-  const handleDeletePlaylist = async (playlistId: number) => {
-    const token = localStorage.getItem("authToken");
-
-    try {
-      await axios.delete(`http://192.168.100.24:9000/playlist/${playlistId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      setPlaylistSuccessMessage("Playlist deleted successfully!");
-      fetchPlaylists();
-    } catch (err: any) {
-      setPlaylistError("Failed to delete playlist.");
+      const playlistsData = await fetchPlaylists();
+      setPlaylists(playlistsData);
+    } catch (error) {
+      setPlaylistError("Failed to create playlist");
     }
   };
 
@@ -190,46 +89,51 @@ const PlaylistPage = () => {
   };
 
   const handleChangeName = async (playlistId: number) => {
-    const token = localStorage.getItem("authToken");
-
     if (!newPlaylistName) {
       setPlaylistError("Playlist title cannot be empty.");
       return;
     }
-
     try {
-      await axios.put(
-        `http://192.168.100.24:9000/playlist/${playlistId}`,
-        { title: newPlaylistName },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
+      await updatePlaylistTitle(playlistId, newPlaylistName);
       setPlaylistSuccessMessage("Playlist title updated successfully!");
       setEditStatus((prevState) => ({
         ...prevState,
         [playlistId]: false,
       }));
-      fetchPlaylists();
-    } catch (err: any) {
+      const playlistsData = await fetchPlaylists();
+      setPlaylists(playlistsData);
+    } catch (error) {
       setPlaylistError("Failed to update playlist title.");
     }
   };
 
-  const handleViewSongs = (playlistId: number) => {
-    if (!songs[playlistId]) {
-      fetchSongsForPlaylist(playlistId);
+ 
+
+  const handleDeleteSong = async (playlistId: number, songId: number) => {
+    try {
+      await deleteSongFromPlaylist(playlistId, songId);
+      const songsData = await fetchSongsForPlaylist(playlistId);
+      setSongs((prevSongs) => ({
+        ...prevSongs,
+        [playlistId]: songsData,
+      }));
+    } catch (error) {
+      setPlaylistError("Failed to delete song.");
+    }
+  };
+
+  const handleDeletePlaylist = async (playlistId: number) => {
+    try {
+      await deletePlaylist(playlistId);
+      const playlistsData = await fetchPlaylists();
+      setPlaylists(playlistsData);
+    } catch (error) {
+      setPlaylistError("Failed to delete playlist.");
     }
   };
 
   if (loading) {
-    return (
-      <div className="text-center mt-10 text-white">Loading playlists...</div>
-    );
+    return <div className="text-center mt-10 text-white">Loading playlists...</div>;
   }
 
   return (
@@ -264,12 +168,8 @@ const PlaylistPage = () => {
           />
         </div>
 
-        {playlistError && (
-          <div className="text-red-500 mt-2">{playlistError}</div>
-        )}
-        {playlistSuccessMessage && (
-          <div className="text-green-500 mt-2">{playlistSuccessMessage}</div>
-        )}
+        {playlistError && <div className="text-red-500 mt-2">{playlistError}</div>}
+        {playlistSuccessMessage && <div className="text-green-500 mt-2">{playlistSuccessMessage}</div>}
 
         <button
           type="submit"
@@ -320,9 +220,7 @@ const PlaylistPage = () => {
                     Delete
                   </div>
                   <div
-                    onClick={() =>
-                      handleEditToggle(playlist.id, playlist.title)
-                    }
+                    onClick={() => handleEditToggle(playlist.id, playlist.title)}
                     className="text-blue-500 cursor-pointer mt-2"
                   >
                     Edit

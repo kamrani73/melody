@@ -1,93 +1,44 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import CardSong from "../components/CardSong";
+// src/pages/Home.tsx
 
-interface Song {
-  format: any;
-  id: number;
-  album_name: string;
-  artist_name: string;
-  title: string;
-  duration: string;
-  year: string;
-}
-
-interface Playlist {
-  id: number;
-  title: string;
-  cover: string;
-}
-
+import React, { useState, useEffect } from 'react';
+import { fetchSongs, fetchPlaylists, addSongToPlaylist } from '../api';
+import CardSong from '../components/CardSong';
 const Home = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [filteredSongs, setFilteredSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [playlistError, setPlaylistError] = useState<string | null>(null);
   const [showPlaylist, setShowPlaylist] = useState<number | null>(null);
 
-  const fetchSongs = async (search: string) => {
-    const token = localStorage.getItem("authToken");
-
-    try {
-      const response = await axios.get("http://192.168.100.24:9000/song", {
-        params: {
-          "per-page": 20,
-          page: 1,
-          "filter[title][like]": search,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      setSongs(response.data.result.items || []);
-      setFilteredSongs(response.data.result.items || []);
-      setLoading(false);
-    } catch (err: any) {
-      setPlaylistError(err.response?.data?.message || "Failed to load songs");
-      setLoading(false);
-    }
-  };
-
-  const fetchPlaylists = async () => {
-    const token = localStorage.getItem("authToken");
-
-    try {
-      const response = await axios.get("http://192.168.100.24:9000/playlist", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const playlists = response.data.result.items.map((playlist: any) => ({
-        ...playlist,
-        songs: playlist.songs || [],
-      }));
-
-      setPlaylists(playlists);
-    } catch (err) {
-      console.error("Failed to load playlists", err);
-    }
-  };
-
   useEffect(() => {
-    fetchSongs("");
-    fetchPlaylists();
+    const fetchData = async () => {
+      try {
+        const fetchedSongs = await fetchSongs('');
+        setSongs(fetchedSongs);
+        setFilteredSongs(fetchedSongs);
+        const fetchedPlaylists = await fetchPlaylists();
+        setPlaylists(fetchedPlaylists);
+      } catch (error) {
+        setPlaylistError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   useEffect(() => {
-    if (searchQuery) {
-      fetchSongs(searchQuery);
-    } else {
-      fetchSongs("");
-    }
+    const fetchFilteredSongs = async () => {
+      try {
+        const fetchedSongs = await fetchSongs(searchQuery);
+        setFilteredSongs(fetchedSongs);
+      } catch (error) {
+        setPlaylistError(error.message);
+      }
+    };
+    fetchFilteredSongs();
   }, [searchQuery]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,23 +46,12 @@ const Home = () => {
   };
 
   const handleAddToPlaylist = async (playlistId: number, songId: number) => {
-    const token = localStorage.getItem("authToken");
-
     try {
-      await axios.post(
-        `http://192.168.100.24:9000/playlist/add-song/${playlistId}`,
-        { song_id: songId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await addSongToPlaylist(playlistId, songId);
       alert(`Song added to playlist ${playlistId}`);
-    } catch (err: any) {
-      console.error("Failed to add song to playlist:", err);
-      alert("Failed to add song to playlist.");
+    } catch (error) {
+      console.error('Failed to add song to playlist:', error);
+      alert('Failed to add song to playlist.');
     }
   };
 
@@ -125,9 +65,7 @@ const Home = () => {
 
   return (
     <div className="p-6 bg-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center mt-20 ">
-        Melody Songs
-      </h1>
+      <h1 className="text-3xl font-bold mb-6 text-center mt-20">Melody Songs</h1>
       <div className="mb-6 text-center">
         <input
           type="text"
