@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Add missing import for useNavigate
-import { useState } from "react"; // Add missing import for useState
 
 // Fetch songs based on search term
 export const fetchSongs = async (search: string) => {

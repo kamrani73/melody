@@ -1,8 +1,9 @@
-// src/pages/Home.tsx
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { fetchSongs, fetchPlaylists, addSongToPlaylist } from '../api';
 import CardSong from '../components/CardSong';
+import { Playlist, Song } from '../components/type';
 const Home = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [filteredSongs, setFilteredSongs] = useState<Song[]>([]);
