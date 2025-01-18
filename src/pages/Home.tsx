@@ -132,7 +132,7 @@ const Home = () => {
 
   return (
     <div className="p-6 bg-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">Music Songs</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center mt-20 ">Melody Songs</h1>
       <div className="mb-6 text-center">
         <input
           type="text"
