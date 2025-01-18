@@ -15,7 +15,7 @@ interface Song {
   title: string;
   artist_name: string;
   album_name: string;
-  duration: string; // Duration in seconds as a string
+  duration: string;  
   file: string;
   format: string;
 }

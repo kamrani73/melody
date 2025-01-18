@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */ 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import CardSong from "../components/cardSong";  
+import CardSong from "../components/CardSong";
 
 interface Song {
   format: any;
@@ -60,21 +60,20 @@ const Home = () => {
 
     try {
       const response = await axios.get("http://192.168.100.24:9000/playlist", {
-        params: {
-          "per-page": 20,
-          page: 1,
-        },
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      setPlaylists(response.data.result.items || []);
-    } catch (err: any) {
-      setPlaylistError(
-        err.response?.data?.message || "Failed to load playlists"
-      );
+      const playlists = response.data.result.items.map((playlist: any) => ({
+        ...playlist,
+        songs: playlist.songs || [],
+      }));
+
+      setPlaylists(playlists);
+    } catch (err) {
+      console.error("Failed to load playlists", err);
     }
   };
 
@@ -126,7 +125,9 @@ const Home = () => {
 
   return (
     <div className="p-6 bg-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center mt-20 ">Melody Songs</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center mt-20 ">
+        Melody Songs
+      </h1>
       <div className="mb-6 text-center">
         <input
           type="text"

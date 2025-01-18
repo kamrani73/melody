@@ -31,11 +31,9 @@ const Login = () => {
         }
       );
 
-      // Save the token in localStorage
       const token = response.data.result.access_token;
       localStorage.setItem("authToken", token);
 
-      // Redirect to home page
       navigate("/home");
     } catch (error: any) {
       setErrorMessage(

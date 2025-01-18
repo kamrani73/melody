@@ -5,7 +5,7 @@ import axios from "axios";
 import * as Yup from "yup";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 
- const validationSchema = Yup.object({
+const validationSchema = Yup.object({
   first_name: Yup.string()
     .required("First Name is required")
     .min(3, "First Name must be at least 3 characters"),
@@ -24,7 +24,7 @@ const Register = () => {
   const [responseMessage, setResponseMessage] = useState("");
 
   const handleSubmit = async (values: any) => {
-    const token = "aaa"; // Replace with actual token
+    const token = "aaa";
 
     try {
       const response = await axios.post(
@@ -66,7 +66,10 @@ const Register = () => {
           {() => (
             <Form>
               <div className="mb-4">
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="first_name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   First Name
                 </label>
                 <Field
@@ -83,7 +86,10 @@ const Register = () => {
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="last_name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Last Name
                 </label>
                 <Field
@@ -100,7 +106,10 @@ const Register = () => {
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Username
                 </label>
                 <Field
@@ -117,7 +126,10 @@ const Register = () => {
                 />
               </div>
               <div className="mb-6">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Password
                 </label>
                 <Field
@@ -145,7 +157,9 @@ const Register = () => {
         </Formik>
 
         {responseMessage && (
-          <p className="mt-4 text-center text-sm text-gray-700">{responseMessage}</p>
+          <p className="mt-4 text-center text-sm text-gray-700">
+            {responseMessage}
+          </p>
         )}
       </div>
     </div>

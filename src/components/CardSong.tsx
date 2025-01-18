@@ -1,5 +1,5 @@
 import React from "react";
-import { Song, Playlist } from "../pages/Home"; 
+import { Song, Playlist } from "./type"; 
 
 interface CardSongProps {
   song: Song;
@@ -30,7 +30,7 @@ const CardSong: React.FC<CardSongProps> = ({
           <h2 className="text-2xl font-semibold text-white">{song.title}</h2>
           <p className="text-lg text-gray-400">By {song.artist_name}</p>
           <p className="text-sm text-gray-500">
-            {song.album_name} ({song.year})
+            {song.album_name} 
           </p>
         </div>
         <div className="text-sm text-gray-400">
