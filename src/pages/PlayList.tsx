@@ -292,100 +292,99 @@ const Playlist = () => {
 
       <h1 className="text-2xl font-bold mb-4 mt-8">Playlists</h1>
       {playlists.length > 0 ? (
-  <ul className="grid grid-cols-3 gap-4">
-    {playlists.map((playlist) => (
-      <li key={playlist.id} className="p-4 bg-gray-800 rounded shadow">
-        {editStatus[playlist.id] ? (
-          <div>
-            <input
-              placeholder="New name of playlist"
-              value={newPlaylistName}
-              onChange={(e) => setNewPlaylistName(e.target.value)}
-              type="text"
-              className="w-full p-2 border rounded mt-1 bg-gray-700 text-white"
-            />
-            <input
-              type="file"
-              id="cover"
-              className="w-full p-2 border rounded mt-1 bg-gray-700 text-white"
-            />
-            <div
-              onClick={() => handleChangeName(playlist.id)}
-              className="mt-2 bg-green-500 text-white p-2 rounded cursor-pointer"
-            >
-              Submit Change
-            </div>
-          </div>
-        ) : (
-          <div>
-            <img
-              src={playlist.cover}
-              alt={playlist.title}
-              className="h-20 object-cover rounded mt-2"
-            />
-            <h2 className="text-xl font-semibold">{playlist.title}</h2>
-            <div
-              onClick={() => handleDeleteplaylist(playlist.id)}
-              className="text-red-500 cursor-pointer mt-2"
-            >
-              Delete
-            </div>
-            <div
-              onClick={() =>
-                handleEditToggle(playlist.id, playlist.title)
-              }
-              className="text-blue-500 cursor-pointer mt-2"
-            >
-              Edit
-            </div>
-            <div>
-              <div>
-                <h3 className="font-bold text-lg">Songs:</h3>
-                {playlist.songs.length > 0 ? (
-                  <ul>
-                    {playlist.songs.map((song: Song) => (
-                      <li key={song.id} className="mt-2">
-                        <div>
-                          <strong>{song.title}</strong> by{" "}
-                          {song.artist_name}
-                        </div>
-                        <div>{song.album_name}</div>
-                        <div>{formatDuration(song.duration)}</div>
-                        <div>
-                          <a
-                            href={song.file}
-                            className="text-blue-500"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Download
-                          </a>
-                          <div
-                            onClick={() =>
-                              handleDeleteSong(playlist.id, song.id)
-                            }
-                            className="text-red-500 cursor-pointer mt-2"
-                          >
-                            Delete Song
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No songs in this playlist.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </li>
-    ))}
-  </ul>
-) : (
-  <div>No playlists found.</div>
-)}
-
+        <ul className="grid grid-cols-3 gap-4">
+          {playlists.map((playlist) => (
+            <li key={playlist.id} className="p-4 bg-gray-800 rounded shadow">
+              {editStatus[playlist.id] ? (
+                <div>
+                  <input
+                    placeholder="New name of playlist"
+                    value={newPlaylistName}
+                    onChange={(e) => setNewPlaylistName(e.target.value)}
+                    type="text"
+                    className="w-full p-2 border rounded mt-1 bg-gray-700 text-white"
+                  />
+                  <input
+                    type="file"
+                    id="cover"
+                    className="w-full p-2 border rounded mt-1 bg-gray-700 text-white"
+                  />
+                  <div
+                    onClick={() => handleChangeName(playlist.id)}
+                    className="mt-2 bg-green-500 text-white p-2 rounded cursor-pointer"
+                  >
+                    Submit Change
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <img
+                    src={playlist.cover}
+                    alt={playlist.title}
+                    className="h-20 object-cover rounded mt-2"
+                  />
+                  <h2 className="text-xl font-semibold">{playlist.title}</h2>
+                  <div
+                    onClick={() => handleDeleteplaylist(playlist.id)}
+                    className="text-red-500 cursor-pointer mt-2"
+                  >
+                    Delete
+                  </div>
+                  <div
+                    onClick={() =>
+                      handleEditToggle(playlist.id, playlist.title)
+                    }
+                    className="text-blue-500 cursor-pointer mt-2"
+                  >
+                    Edit
+                  </div>
+                  <div>
+                    <div>
+                      <h3 className="font-bold text-lg">Songs:</h3>
+                      {playlist.songs.length > 0 ? (
+                        <ul>
+                          {playlist.songs.map((song: Song) => (
+                            <li key={song.id} className="mt-2">
+                              <div>
+                                <strong>{song.title}</strong> by{" "}
+                                {song.artist_name}
+                              </div>
+                              <div>{song.album_name}</div>
+                              <div>{formatDuration(song.duration)}</div>
+                              <div>
+                                <a
+                                  href={song.file}
+                                  className="text-blue-500"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Download
+                                </a>
+                                <div
+                                  onClick={() =>
+                                    handleDeleteSong(playlist.id, song.id)
+                                  }
+                                  className="text-red-500 cursor-pointer mt-2"
+                                >
+                                  Delete Song
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No songs in this playlist.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div>No playlists found.</div>
+      )}
     </div>
   );
 };

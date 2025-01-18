@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 interface Song {
+  format: any;
   id: number;
   album_name: string;
   artist_name: string;
@@ -193,7 +194,7 @@ const Home = () => {
                   </div>
                 )}
               <a
-                href={`http://192.168.100.24:9000/song/download/${song.id}`}
+                href={`http://192.168.100.24:9000/song/download/${song.id}.${song.format}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-green-600 ml-2 text-white p-2 rounded-md hover:bg-green-500 mt-4   text-center"

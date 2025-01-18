@@ -23,7 +23,7 @@ const App = () => {
   return (
     <Router>
       {/* Fixed Navbar */}
-      <nav className="p-4 bg-gray-100 flex justify-between fixed top-0 left-0 right-0 z-10 dark:bg-gray-800">
+      <nav className="p-4 bg-gray-900 flex justify-between fixed top-0 left-0 right-0 z-10 dark:bg-gray-800">
         <div>
           <Link
             to="/home"
