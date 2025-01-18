@@ -1,179 +1,273 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+    import React, { useState, useEffect } from "react";
+    import axios from "axios";
 
-interface Playlist {
-  id: number;
-  title: string;
-  cover: string;
-}
+    interface Playlist {
+    id: number;
+    title: string;
+    cover: string;
+    }
 
-const PlaylistDetail = () => {
-  const { playlist_id } = useParams<{ playlist_id: string }>();  
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [playlistTitle, setPlaylistTitle] = useState<string>("");
-  const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const navigate = useNavigate(); // For navigation after delete or update
+    const Playlist = () => {
+    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchPlaylistDetail = async () => {
-    const token = localStorage.getItem("authToken");
-    try {
-      const response = await axios.get(
-        `http://192.168.100.24:9000/playlist/${playlist_id}`,
-        {
-          headers: {
+    const [playlistTitle, setPlaylistTitle] = useState<string>("");
+    const [coverImage, setCoverImage] = useState<File | null>(null);
+    const [playlistError, setPlaylistError] = useState<string | null>(null);
+    const [playlistSuccessMessage, setPlaylistSuccessMessage] = useState<
+        string | null
+    >(null);
+
+    // State for editing playlist name
+    const [editStatus, setEditStatus] = useState<{ [key: number]: boolean }>({});
+    const [newPlaylistName, setNewPlaylistName] = useState<string>("");
+
+    // Fetch playlists
+    const fetchPlaylists = async () => {
+        const token = localStorage.getItem("authToken");
+
+        try {
+        const response = await axios.get("http://192.168.100.24:9000/playlist", {
+            params: {
+            "per-page": 20,
+            page: 1,
+            },
+            headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
-          },
+            },
+        });
+
+        setPlaylists(response.data.result.items || []);
+        setLoading(false);
+        } catch (err: any) {
+        setPlaylistError(
+            err.response?.data?.message || "Failed to load playlists"
+        );
+        setLoading(false);
         }
-      );
-      setPlaylist(response.data.result);
-      setPlaylistTitle(response.data.result.title);
-      setLoading(false);
-    } catch (err: any) {
-      setError("Failed to load playlist details.");
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (playlist_id) {
-      fetchPlaylistDetail(); 
-    }
-  }, [playlist_id]);
+    // Fetch playlists on initial load
+    useEffect(() => {
+        fetchPlaylists(); // Fetch playlists
+    }, []);
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlaylistTitle(e.target.value);
-  };
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPlaylistTitle(e.target.value);
+    };
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setCoverImage(e.target.files[0]);
-    }
-  };
+    const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+        setCoverImage(e.target.files[0]);
+        }
+    };
 
-  const handleUpdatePlaylist = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const handleCreatePlaylist = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    if (!playlistTitle || !coverImage) {
-      setError("Title and cover image are required!");
-      return;
-    }
+        if (!playlistTitle || !coverImage) {
+        setPlaylistError("Title and cover image are required!");
+        return;
+        }
 
-    const token = localStorage.getItem("authToken");
+        const token = localStorage.getItem("authToken");
 
-    const formData = new FormData();
-    formData.append("title", playlistTitle);
-    formData.append("cover", coverImage);
+        const formData = new FormData();
+        formData.append("title", playlistTitle);
+        formData.append("cover", coverImage);
 
-    try {
-      const response = await axios.put(
-        `http://192.168.100.24:9000/playlist/${playlist_id}`,
-        formData,
-        {
-          headers: {
+        try {
+        const response = await axios.post(
+            "http://192.168.100.24:9000/playlist",
+            formData,
+            {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+            },
+            }
+        );
+
+        setPlaylistSuccessMessage("Playlist created successfully!");
+        setPlaylistTitle(""); // Clear form fields
+        setCoverImage(null);
+        setPlaylistError(null);
+        fetchPlaylists(); // Refresh the playlist list
+        } catch (err: any) {
+        setPlaylistError(
+            err.response?.data?.message || "Failed to create playlist"
+        );
+        }
+    };
+
+    const handleDeleteplaylist = async (playlistId: number) => {
+        const token = localStorage.getItem("authToken");
+
+        try {
+        await axios.delete(`http://192.168.100.24:9000/playlist/${playlistId}`, {
+            headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
+            "Content-Type": "application/json",
+            },
+        });
+
+        setPlaylistSuccessMessage("Playlist deleted successfully!");
+        fetchPlaylists(); // Refresh the playlist list after deletion
+        } catch (err: any) {
+        setPlaylistError("Failed to delete playlist.");
         }
-      );
+    };
 
-      setSuccessMessage("Playlist updated successfully!");
-      fetchPlaylistDetail(); // Refresh the playlist details
-    } catch (err: any) {
-      setError("Failed to update playlist.");
+    const handleEditToggle = (playlistId: number, title: string) => {
+        setEditStatus((prevState) => ({
+        ...prevState,
+        [playlistId]: !prevState[playlistId],
+        }));
+        setNewPlaylistName(title); // Set the current title to the new name input
+    };
+
+    const handleChangeName = async (playlistId: number) => {
+        const token = localStorage.getItem("authToken");
+
+        if (!newPlaylistName) {
+        setPlaylistError("Playlist title cannot be empty.");
+        return;
+        }
+
+        try {
+        await axios.put(
+            `http://192.168.100.24:9000/playlist/${playlistId}`,
+            { title: newPlaylistName },
+            {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            }
+        );
+
+        setPlaylistSuccessMessage("Playlist title updated successfully!");
+        setEditStatus((prevState) => ({
+            ...prevState,
+            [playlistId]: false,
+        }));
+        fetchPlaylists(); // Refresh the playlist list
+        } catch (err: any) {
+        setPlaylistError("Failed to update playlist title.");
+        }
+    };
+
+    if (loading) {
+        return <div className="text-center mt-10">Loading playlists...</div>;
     }
-  };
 
-  const handleDeletePlaylist = async () => {
-    const token = localStorage.getItem("authToken");
+    return (
+        <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">Create a Playlist</h1>
 
-    try {
-      await axios.delete(`http://192.168.100.24:9000/playlist/${playlist_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+        {/* Playlist Creation Form */}
+        <form onSubmit={handleCreatePlaylist}>
+            <div className="mb-4">
+            <label htmlFor="title" className="block text-lg font-semibold">
+                Playlist Title
+            </label>
+            <input
+                type="text"
+                id="title"
+                value={playlistTitle}
+                onChange={handleTitleChange}
+                placeholder="Enter playlist title"
+                className="w-full p-2 border rounded mt-1"
+            />
+            </div>
 
-      setSuccessMessage("Playlist deleted successfully!");
-      navigate("/playlist"); // Redirect to playlist page after deletion
-    } catch (err: any) {
-      setError("Failed to delete playlist.");
-    }
-  };
+            <div className="mb-4">
+            <label htmlFor="cover" className="block text-lg font-semibold">
+                Playlist Cover
+            </label>
+            <input
+                type="file"
+                id="cover"
+                onChange={handleCoverChange}
+                className="w-full p-2 border rounded mt-1"
+            />
+            </div>
 
-  if (loading) {
-    return <div className="text-center mt-10">Loading playlist...</div>;
-  }
+            {playlistError && (
+            <div className="text-red-500 mt-2">{playlistError}</div>
+            )}
+            {playlistSuccessMessage && (
+            <div className="text-green-500 mt-2">{playlistSuccessMessage}</div>
+            )}
 
-  return (
-    <div className="p-4">
-      {error && <div className="text-red-500 mt-2">{error}</div>}
-      {successMessage && (
-        <div className="text-green-500 mt-2">{successMessage}</div>
-      )}
+            <button
+            type="submit"
+            className="mt-4 bg-blue-500 text-white p-2 rounded"
+            >
+            Create Playlist
+            </button>
+        </form>
 
-      <h1 className="text-2xl font-bold mb-4">Edit Playlist</h1>
+        <h1 className="text-2xl font-bold mb-4 mt-8">Playlists</h1>
 
-      <form onSubmit={handleUpdatePlaylist}>
-        <div className="mb-4">
-          <label htmlFor="title" className="block text-lg font-semibold">
-            Playlist Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={playlistTitle}
-            onChange={handleTitleChange}
-            placeholder="Enter playlist title"
-            className="w-full p-2 border rounded mt-1"
-          />
+        {playlists.length > 0 ? (
+            <ul className="space-y-4">
+            {playlists.map((playlist) => (
+                <li key={playlist.id} className="p-4 bg-gray-100 rounded shadow">
+                {editStatus[playlist.id] ? (
+                    <div>
+                    <input
+                        placeholder="New name of playlist"
+                        value={newPlaylistName}
+                        onChange={(e) => setNewPlaylistName(e.target.value)}
+                        type="text"
+                        className="w-full p-2 border rounded mt-1"
+                    />
+                        <input
+                type="file"
+                id="cover"
+                className="w-full p-2 border rounded mt-1"
+            />
+                    <div
+                        onClick={() => handleChangeName(playlist.id)}
+                        className="mt-2 bg-green-500 text-white p-2 rounded cursor-pointer"
+                    >
+                        Submit Change
+                    </div>
+                    </div>
+                ) : (
+                    <div>
+                    <h2 className="text-xl font-semibold">{playlist.title}</h2>
+                    <img
+                        src={`http://192.168.100.24:9000/uploads/${playlist.cover}`}
+                        alt={playlist.title}
+                        className="w-20 h-20 object-cover rounded mt-2"
+                    />
+                    <div
+                        onClick={() => handleDeleteplaylist(playlist.id)}
+                        className="text-red-500 cursor-pointer mt-2"
+                    >
+                        Delete
+                    </div>
+                    <div
+                        onClick={() =>
+                        handleEditToggle(playlist.id, playlist.title)
+                        }
+                        className="text-blue-500 cursor-pointer mt-2"
+                    >
+                        Edit
+                    </div>
+                    </div>
+                )}
+                </li>
+            ))}
+            </ul>
+        ) : (
+            <p>No playlists found.</p>
+        )}
         </div>
+    );
+    };
 
-        <div className="mb-4">
-          <label htmlFor="cover" className="block text-lg font-semibold">
-            Playlist Cover
-          </label>
-          <input
-            type="file"
-            id="cover"
-            onChange={handleCoverChange}
-            className="w-full p-2 border rounded mt-1"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="mt-4 bg-blue-500 text-white p-2 rounded"
-        >
-          Update Playlist
-        </button>
-      </form>
-
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold">Playlist Details</h2>
-        <div className="p-4 bg-gray-100 rounded shadow mt-4">
-          <h3 className="text-lg font-bold">{playlist?.title}</h3>
-          <img
-            src={`http://192.168.100.24:9000/uploads/${playlist?.cover}`}
-            alt={playlist?.title}
-            className="w-20 h-20 object-cover rounded mt-2"
-          />
-        </div>
-      </div>
-
-      <button
-        onClick={handleDeletePlaylist}
-        className="mt-4 bg-red-500 text-white p-2 rounded"
-      >
-        Delete Playlist
-      </button>
-    </div>
-  );
-};
-
-export default PlaylistDetail;
+    export default Playlist;

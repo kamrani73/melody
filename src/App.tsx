@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Playlist from "./pages/Playlist"; // Updated import to match file name
+import './app.css';
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("authToken");
