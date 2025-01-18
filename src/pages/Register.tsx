@@ -20,6 +20,8 @@ const validationSchema = Yup.object({
     .min(5, "Password must be at least 5 characters"),
 });
 
+
+
 const Register = () => {
   const [responseMessage, setResponseMessage] = useState("");
 
