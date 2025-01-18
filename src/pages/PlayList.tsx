@@ -1,24 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */ import React, {
-  useState,
-  useEffect,
-  ChangeEvent,
-  FormEvent,
-} from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import axios from "axios";
+import * as Yup from "yup";
+import { Formik, Field, Form, ErrorMessage } from "formik";
 
 interface Playlist {
   id: number;
   title: string;
   cover: string;
-  songs: Song;
+  songs: Song[];
 }
 
 interface Song {
-  length: number;
-  map(
-    arg0: (song: Song) => import("react/jsx-runtime").JSX.Element
-  ): React.ReactNode;
   id: number;
   title: string;
   artist_name: string;
@@ -28,24 +22,28 @@ interface Song {
   format: string;
 }
 
-const Playlist = () => {
+// Validation schema using Yup
+const validationSchema = Yup.object({
+  playlistTitle: Yup.string()
+    .required("Playlist title is required")
+    .min(3, "Playlist title must be at least 3 characters long")
+    .max(100, "Playlist title must be at most 100 characters long"),
+});
+
+const PlaylistPage = () => {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [songs, setSongs] = useState<{ [key: number]: Song[] }>({});
   const [loading, setLoading] = useState<boolean>(true);
-
-  const [playlistTitle, setPlaylistTitle] = useState<string>("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
   const [playlistSuccessMessage, setPlaylistSuccessMessage] = useState<
     string | null
   >(null);
-
   const [editStatus, setEditStatus] = useState<{ [key: number]: boolean }>({});
   const [newPlaylistName, setNewPlaylistName] = useState<string>("");
 
   const fetchPlaylists = async () => {
     const token = localStorage.getItem("authToken");
-
     try {
       const response = await axios.get("http://192.168.100.24:9000/playlist", {
         params: {
@@ -102,28 +100,22 @@ const Playlist = () => {
     return `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
   };
 
-  const handleTitleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setPlaylistTitle(e.target.value);
-  };
-
   const handleCoverChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setCoverImage(e.target.files[0]);
     }
   };
 
-  const handleCreatePlaylist = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!playlistTitle || !coverImage) {
-      setPlaylistError("Title and cover image are required!");
+  const handleCreatePlaylist = async (values: any) => {
+    if (!coverImage) {
+      setPlaylistError("Cover image is required!");
       return;
     }
 
     const token = localStorage.getItem("authToken");
 
     const formData = new FormData();
-    formData.append("title", playlistTitle);
+    formData.append("title", values.playlistTitle);
     formData.append("cover", coverImage);
 
     try {
@@ -139,8 +131,6 @@ const Playlist = () => {
       );
 
       setPlaylistSuccessMessage("Playlist created successfully!");
-      setPlaylistTitle("");
-      setCoverImage(null);
       setPlaylistError(null);
       fetchPlaylists();
     } catch (err: any) {
@@ -174,7 +164,7 @@ const Playlist = () => {
     }
   };
 
-  const handleDeleteplaylist = async (playlistId: number) => {
+  const handleDeletePlaylist = async (playlistId: number) => {
     const token = localStorage.getItem("authToken");
 
     try {
@@ -247,49 +237,65 @@ const Playlist = () => {
     <div className="p-4 bg-gray-900 text-white">
       <h1 className="text-2xl font-bold mb-4">Create a Playlist</h1>
 
-      {/* Playlist Creation Form */}
-      <form onSubmit={handleCreatePlaylist}>
-        <div className="mb-4">
-          <label htmlFor="title" className="block text-lg font-semibold">
-            Playlist Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={playlistTitle}
-            onChange={handleTitleChange}
-            placeholder="Enter playlist title"
-            className="w-full p-2 border rounded mt-1 bg-gray-800 text-white"
-          />
-        </div>
+      {/* Playlist Creation Form with Formik */}
+      <Formik
+        initialValues={{ playlistTitle: "" }}
+        validationSchema={validationSchema}
+        onSubmit={handleCreatePlaylist}
+      >
+        {({ setFieldValue }) => (
+          <Form>
+            <div className="mb-4">
+              <label htmlFor="playlistTitle" className="block text-lg font-semibold">
+                Playlist Title
+              </label>
+              <Field
+                name="playlistTitle"
+                type="text"
+                placeholder="Enter playlist title"
+                className="w-full p-2 border rounded mt-1 bg-gray-800 text-white"
+              />
+              <ErrorMessage
+                name="playlistTitle"
+                component="div"
+                className="text-red-500 mt-2"
+              />
+            </div>
 
-        <div className="mb-4">
-          <label htmlFor="cover" className="block text-lg font-semibold">
-            Playlist Cover
-          </label>
-          <input
-            type="file"
-            id="cover"
-            onChange={handleCoverChange}
-            className="w-full p-2 border rounded mt-1 bg-gray-800 text-white"
-          />
-        </div>
+            <div className="mb-4">
+              <label htmlFor="cover" className="block text-lg font-semibold">
+                Playlist Cover
+              </label>
+              <input
+                type="file"
+                id="cover"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setCoverImage(e.target.files[0]);
+                  }
+                }}
+                className="w-full p-2 border rounded mt-1 bg-gray-800 text-white"
+              />
+            </div>
 
-        {playlistError && (
-          <div className="text-red-500 mt-2">{playlistError}</div>
+            {playlistError && (
+              <div className="text-red-500 mt-2">{playlistError}</div>
+            )}
+            {playlistSuccessMessage && (
+              <div className="text-green-500 mt-2">{playlistSuccessMessage}</div>
+            )}
+
+            <button
+              type="submit"
+              className="mt-4 bg-blue-500 text-white p-2 rounded"
+            >
+              Create Playlist
+            </button>
+          </Form>
         )}
-        {playlistSuccessMessage && (
-          <div className="text-green-500 mt-2">{playlistSuccessMessage}</div>
-        )}
+      </Formik>
 
-        <button
-          type="submit"
-          className="mt-4 bg-blue-500 text-white p-2 rounded"
-        >
-          Create Playlist
-        </button>
-      </form>
-
+      {/* Playlists List and Edit/Delete functionality goes here */}
       <h1 className="text-2xl font-bold mb-4 mt-8">Playlists</h1>
       {playlists.length > 0 ? (
         <ul className="grid grid-cols-3 gap-4">
@@ -304,78 +310,40 @@ const Playlist = () => {
                     type="text"
                     className="w-full p-2 border rounded mt-1 bg-gray-700 text-white"
                   />
-                  <input
-                    type="file"
-                    id="cover"
-                    className="w-full p-2 border rounded mt-1 bg-gray-700 text-white"
-                  />
-                  <div
+                  <button
                     onClick={() => handleChangeName(playlist.id)}
-                    className="mt-2 bg-green-500 text-white p-2 rounded cursor-pointer"
+                    className="mt-2 bg-green-500 text-white p-2 rounded"
                   >
-                    Submit Change
-                  </div>
+                    Save Changes
+                  </button>
                 </div>
               ) : (
                 <div>
                   <img
                     src={playlist.cover}
-                    alt={playlist.title}
-                    className="h-20 object-cover rounded mt-2"
+                    alt="Playlist Cover"
+                    className="w-full h-32 object-cover mb-2"
                   />
-                  <h2 className="text-xl font-semibold">{playlist.title}</h2>
-                  <div
-                    onClick={() => handleDeleteplaylist(playlist.id)}
-                    className="text-red-500 cursor-pointer mt-2"
-                  >
-                    Delete
-                  </div>
-                  <div
-                    onClick={() =>
-                      handleEditToggle(playlist.id, playlist.title)
-                    }
-                    className="text-blue-500 cursor-pointer mt-2"
-                  >
-                    Edit
-                  </div>
-                  <div>
-                    <div>
-                      <h3 className="font-bold text-lg">Songs:</h3>
-                      {playlist.songs.length > 0 ? (
-                        <ul>
-                          {playlist.songs.map((song: Song) => (
-                            <li key={song.id} className="mt-2">
-                              <div>
-                                <strong>{song.title}</strong> by{" "}
-                                {song.artist_name}
-                              </div>
-                              <div>{song.album_name}</div>
-                              <div>{formatDuration(song.duration)}</div>
-                              <div>
-                                <a
-                                  href={song.file}
-                                  className="text-blue-500"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Download
-                                </a>
-                                <div
-                                  onClick={() =>
-                                    handleDeleteSong(playlist.id, song.id)
-                                  }
-                                  className="text-red-500 cursor-pointer mt-2"
-                                >
-                                  Delete Song
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>No songs in this playlist.</p>
-                      )}
-                    </div>
+                  <h3 className="text-xl font-semibold">{playlist.title}</h3>
+                  <div className="mt-2">
+                    <button
+                      onClick={() => handleEditToggle(playlist.id, playlist.title)}
+                      className="bg-blue-500 text-white p-2 rounded mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeletePlaylist(playlist.id)}
+                      className="bg-red-500 text-white p-2 rounded"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => handleViewSongs(playlist.id)}
+                      className="bg-purple-500 text-white p-2 rounded ml-2"
+                    >
+                      View Songs
+                    </button>
                   </div>
                 </div>
               )}
@@ -383,10 +351,10 @@ const Playlist = () => {
           ))}
         </ul>
       ) : (
-        <div>No playlists found.</div>
+        <div>No playlists available</div>
       )}
     </div>
   );
 };
 
-export default Playlist;
+export default PlaylistPage;
