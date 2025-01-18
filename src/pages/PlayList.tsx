@@ -342,7 +342,7 @@ const PlaylistPage = () => {
                               <div>{formatDuration(song.duration)}</div>
                               <div>
                                 <a
-                                  href={song.file}
+                                  href={`http://192.168.100.24:9000/song/download/${song.id}.${song.format}`}
                                   className="text-blue-500"
                                   target="_blank"
                                   rel="noopener noreferrer"
